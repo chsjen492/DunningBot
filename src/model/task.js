@@ -5,24 +5,14 @@ const taskSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    deadline: {
-        type: Date,
+    week: {
+        type: Number,
         required: true,
     },
     createdAt: {
         type: Date,
         default: Date.now,
-    }
+    },
 })
 
-taskSchema.index({ deadline: 1 })
-
-export function getTasks() {
-    return this.find({
-        deadline: { $gt: new Date() }
-    })
-        .sort({ deadline: 1 })
-        .limit(3)
-}
-
-export default mongoose.model('tasks', taskSchema)
+export default mongoose.model('Task', taskSchema)
