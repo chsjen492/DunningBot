@@ -1,9 +1,10 @@
-import mongoose, {mongo} from 'mongoose'
+import mongoose from 'mongoose'
+import { DB_URL } from '../config'
 
 export async function connectDB() {
     try {
-        await mongoose.connect(process.env.DB_URL)
-        console.log("successfully connect MongoDB.")
+        await mongoose.connect(DB_URL)
+        console.log('successfully connect MongoDB.')
     } catch (error) {
         throw new Error(error)
     }
@@ -12,9 +13,8 @@ export async function connectDB() {
 export async function close() {
     try {
         await mongoose.connection.close(false)
-        console.log("connection closed")
+        console.log('connection closed')
     } catch (error) {
-        throw new Error("DB closing error")
+        throw new Error('DB closing error')
     }
 }
-

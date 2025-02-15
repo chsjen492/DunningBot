@@ -1,109 +1,82 @@
-import { Client, Events, GatewayIntentBits} from 'discord.js'
-import { config } from 'dotenv'
-import Task, {getTasks} from "./src/model/task.js";
-import Service from "./src/service/service.js";
-import {connectDB} from "./src/model/connect.js";
+import { Client, GatewayIntentBits } from 'discord.js'
+import Task from './src/model/task.js'
+import { connectDB } from './src/model/connect.js'
+import { DISCORD_TOKEN } from './src/config'
+import { cronJobs } from './src/service/cron.js'
+import { initSetting } from './src/service/command.js'
+import { getCurrentWeek, getNextWeek } from './src/utils/time.js'
 
-config()
+const client = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+})
 
-const client = new Client({intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]})
-const token = process.env.TOKEN
+client.once('ready', async () => {
+    await connectDB()
+    await initSetting()
+    console.log('독촉 준비 완료')
+    cronJobs()
+})
 
-const isValidDateFormat = (dateString) => {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    return regex.test(dateString) && !isNaN(new Date(dateString));
-}
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isChatInputCommand()) return
 
-const calculateDaysLeft = (deadline) => {
-    const now = new Date();
-    const deadlineDate = new Date(deadline);
-    const diffTime = deadlineDate - now;
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-}
-
-export const handler = async (event) => {
     try {
-        await connectDB();
+        const commandName = interaction.commandName
 
-        // EventBridge 스케줄 이벤트 처리
-        if (event.source === 'aws.events') {
-            switch(event['detail-type']) {
-                case 'qr-reminder':
-                    await Service.sendQRReminder();
-                    break;
+        if (commandName === '이번주' || commandName === '다음주') {
+            const taskName = interaction.options.getString('할일')
+            const currentWeek = getCurrentWeek(new Date())
+            const week = commandName === '이번주' ? currentWeek : getNextWeek(currentWeek)
 
-                case 'task-reminder':
-                    const tasks = await getTasks()
+            const newTask = new Task({
+                taskName,
+                week,
+            })
 
-                    if (tasks.length === 0) {
-                        await Service.sendEmbed({
-                            title: '📅 할 일 현황',
-                            description: '현재 예정된 할 일이 없습니다!',
-                            color: 0x00ff00
-                        });
-                        return;
-                    }
+            await newTask.save()
 
-                    const tasksWithDaysLeft = tasks.map(task => ({
-                        ...task.toObject(),
-                        daysLeft: calculateDaysLeft(task.deadline)
-                    }));
+            await interaction.reply({
+                embeds: [
+                    {
+                        title: '📝 할 일 등록 완료',
+                        fields: [
+                            { name: '할 일', value: taskName },
+                            { name: '등록된 주차', value: `${commandName}` },
+                        ],
+                        color: 0x00ff00,
+                    },
+                ],
+            })
+        } else if (commandName === '끝') {
+            const taskName = interaction.options.getString('할일')
+            const currentWeek = getCurrentWeek(new Date())
 
-                    await Service.sendTaskReminder(tasksWithDaysLeft);
-                    break;
-            }
+            const deletedTask = await Task.deleteOne({ taskName, week: currentWeek })
 
-            return {
-                statusCode: 200,
-                body: JSON.stringify({ message: 'Scheduled task completed' })
-            };
-        }
-
-        const body = JSON.parse(event.body)
-        const { command, options } = body
-
-        switch(command) {
-            case '/등록':
-                const { taskName, deadline } = options
-
-                if (!isValidDateFormat(deadline)) {
-                    await Service.sendMessage('날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요.');
-                    break;
-                }
-
-                const newTask = new Task({
-                    taskName,
-                    deadline: new Date(deadline)
-                });
-                await newTask.save()
-
-                await Service.sendEmbed({
-                    title: '✅ 할 일 등록 완료',
-                    fields: [
+            if (deletedTask) {
+                await interaction.reply({
+                    embeds: [
                         {
-                            name: '할 일',
-                            value: task
+                            title: '✅ 할 일 완료',
+                            fields: [{ name: '완료된 작업', value: taskName }],
+                            color: 0xff0000,
                         },
-                        {
-                            name: '마감기한',
-                            value: deadline
-                        }
                     ],
-                    color: 0x00ff00
                 })
-                break
-        }
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Command processed successfully' })
+            } else {
+                await interaction.reply({
+                    content: '이번 주 할 일 목록에 없습니다.',
+                    ephemeral: true,
+                })
+            }
         }
     } catch (error) {
-        console.error('Error:', error);
-        await Service.sendMessage('⚠️ 오류가 발생했습니다.')
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: error.message })
-        }
+        console.error('Command execution error:', error)
+        await interaction.reply({
+            content: '⚠️ 오류가 발생했습니다.',
+            ephemeral: true,
+        })
     }
-}
+})
+
+client.login(DISCORD_TOKEN)

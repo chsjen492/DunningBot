@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "parser": "babel-eslint",
+  "plugins": ["prettier"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:prettier/recommended"
+  ],
+  "rules": {
+    "prettier/prettier": "error",
+    "no-unused-vars": ["error", { "argsIgnorePattern": "req|res|next|reject" }]
+  }
+}
