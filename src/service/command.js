@@ -1,5 +1,5 @@
 import { REST, Routes, SlashCommandBuilder } from 'discord.js'
-import { DISCORD_APPLICATION_ID, DISCORD_TOKEN } from '../config'
+import { DISCORD_APPLICATION_ID, DISCORD_TOKEN } from '../config/index.js'
 
 const commands = [
     new SlashCommandBuilder()
