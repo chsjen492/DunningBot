@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import { getCurrentWeek, getNextWeek } from '../utils/time.js'
 import Task from '../model/task.js'
 import { EmbedBuilder } from 'discord.js'
-import { CHANNEL_ID } from '../config'
+import { CHANNEL_ID } from '../config/index.js'
 
 export const cronJobs = client => {
     // 매일 아침 9시 알림

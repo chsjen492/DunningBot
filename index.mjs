@@ -1,7 +1,7 @@
 import { Client, GatewayIntentBits } from 'discord.js'
 import Task from './src/model/task.js'
 import { connectDB } from './src/model/connect.js'
-import { DISCORD_TOKEN } from './src/config'
+import { DISCORD_TOKEN } from './src/config/index.js'
 import { cronJobs } from './src/service/cron.js'
 import { initSetting } from './src/service/command.js'
 import { getCurrentWeek, getNextWeek } from './src/utils/time.js'
