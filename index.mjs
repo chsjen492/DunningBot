@@ -14,7 +14,7 @@ client.once('ready', async () => {
     await connectDB()
     await initSetting()
     console.log('독촉 준비 완료')
-    cronJobs()
+    cronJobs(client)
 })
 
 client.on('interactionCreate', async interaction => {
