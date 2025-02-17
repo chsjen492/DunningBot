@@ -5,10 +5,10 @@ import { EmbedBuilder } from 'discord.js'
 import { CHANNEL_ID } from '../config/index.js'
 
 export const cronJobs = client => {
-    // 매일 아침 9시 알림
     cron.schedule(
         '0 9 * * *',
         async () => {
+            console.log('할 일 알림')
             try {
                 const channel = client.channels.cache.get(CHANNEL_ID)
                 if (!channel) return
@@ -22,14 +22,9 @@ export const cronJobs = client => {
                     await channel.send({ embeds: [embed] })
                 } else {
                     const embed = new EmbedBuilder()
-                        .setTitle('📅 주간 할 일')
+                        .setTitle('📅 할 일 알림')
                         .setColor(0x00ff00)
-                        .addFields(
-                            tasks.map(task => ({
-                                name: task.taskName,
-                                inline: false,
-                            })),
-                        )
+                        .setDescription(tasks.map(task => `- ${task.taskName}`).join('\n'))
 
                     await channel.send({
                         content: '@everyone',
@@ -45,10 +40,10 @@ export const cronJobs = client => {
         },
     )
 
-    // 매주 일요일 밤 11시 주간 업데이트
     cron.schedule(
-        '0 23 * * 0',
+        '30 23 * * 0',
         async () => {
+            console.log('미루기')
             try {
                 const channel = client.channels.cache.get(CHANNEL_ID)
                 if (!channel) return
@@ -60,7 +55,7 @@ export const cronJobs = client => {
 
                 if (result.modifiedCount > 0) {
                     const embed = new EmbedBuilder()
-                        .setTitle('📅 주간 할 일 업데이트')
+                        .setTitle('📅 할 일 업데이트')
                         .setDescription(`미완료된 ${result.modifiedCount}개의 할 일을 미뤄버렸습니다.`)
                         .setColor(0xffff00)
 
