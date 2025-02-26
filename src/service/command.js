@@ -14,6 +14,7 @@ const commands = [
         .setName('끝')
         .setDescription('이번 주 할 일을 완료합니다.')
         .addStringOption(option => option.setName('할일').setDescription('완료한 작업을 입력하세요').setRequired(true)),
+    new SlashCommandBuilder().setName('확인').setDescription('이번 주 할 일을 조회합니다.'),
 ]
 
 const rest = new REST({ version: '10' }).setToken(DISCORD_TOKEN)
