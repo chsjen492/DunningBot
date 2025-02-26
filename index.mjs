@@ -1,4 +1,4 @@
-import { Client, EmbedBuilder, GatewayIntentBits } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
 import Task from './src/model/task.js'
 import { connectDB } from './src/model/connect.js'
 import { DISCORD_TOKEN } from './src/config/index.js'
