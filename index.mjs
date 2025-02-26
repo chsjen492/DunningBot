@@ -18,7 +18,7 @@ client.once('ready', async () => {
 })
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isChatInputCommand()) return
+    if (!interaction.isCommand()) return
 
     try {
         const commandName = interaction.commandName
@@ -67,6 +67,27 @@ client.on('interactionCreate', async interaction => {
                 await interaction.reply({
                     content: '이번 주 할 일 목록에 없습니다.',
                     ephemeral: true,
+                })
+            }
+        } else if (commandName === '확인') {
+            const currentWeek = getCurrentWeek(new Date())
+
+            const tasks = await Task.find({ week: currentWeek })
+
+            if (tasks.length === 0) {
+                await interaction.reply({
+                    content: '이번 주 할 일이 없습니다.',
+                    ephemeral: true,
+                })
+            } else {
+                await interaction.reply({
+                    embeds: [
+                        {
+                            title: '📅 할 일 알림',
+                            fields: [{ name: '할 일 목록', value: tasks.map(task => `- ${task.taskName}`).join('\n') }],
+                            color: 0x00ff00,
+                        },
+                    ],
                 })
             }
         }
